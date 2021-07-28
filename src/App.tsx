@@ -1,26 +1,66 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { useState, useEffect } from "react";
+import { Navbar } from "./components/Navbar";
+import { TodoForm } from "./components/TodoForm";
+import { TodoList } from "./components/TodoList";
 
-function App() {
+import { ITodo } from "./interfaces";
+
+declare var confirm: (question: string) => boolean;
+
+const App: React.FC = () => {
+  const [todos, setTodos] = useState<ITodo[]>([]);
+
+  useEffect(() => {
+    const saved = JSON.parse(localStorage.getItem("todos") || "[]") as ITodo[];
+    setTodos(saved);
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("todos", JSON.stringify(todos));
+  }, [todos]);
+
+  const addHandler = (title: string) => {
+    const newTodo = {
+      title,
+      id: Date.now(),
+      completed: false,
+    };
+
+    //setTodos([newTodo, ...todos]);
+    setTodos((prev) => [newTodo, ...todos]);
+  };
+
+  const toggleHandler = (id: number) => {
+    setTodos((prev) =>
+      prev.map((todo) => {
+        if (todo.id === id) {
+          todo.completed = true;
+        }
+        return todo;
+      })
+    );
+  };
+
+  const removeHandler = (id: number) => {
+    const shouldRemove = confirm("Are you sure you want to delete this?");
+    if (shouldRemove) {
+      setTodos((prev) => prev.filter((todo) => todo.id !== id));
+    }
+  };
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <>
+      <Navbar />
+      <div className="container">
+        <TodoForm onAdd={addHandler} />
+        <TodoList
+          todos={todos}
+          onRemove={removeHandler}
+          onToggle={toggleHandler}
+        />
+      </div>
+    </>
   );
-}
+};
 
 export default App;
